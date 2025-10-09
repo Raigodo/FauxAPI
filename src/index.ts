@@ -1,37 +1,13 @@
-import "dotenv/config";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { eq } from "drizzle-orm";
-import { usersTable } from "./db/schema.js";
+import s3Client from "#bucket.js";
+import db from "#database.js";
+import express from "express";
 
-const db = drizzle(process.env.DATABASE_URL!);
+const app = express();
+const port = process.env.PORT ?? "9001";
 
-const user: typeof usersTable.$inferInsert = {
-  name: "John",
-  age: 30,
-  email: "john@example.com",
-};
+s3Client;
+db;
 
-await db.insert(usersTable).values(user);
-console.log("New user created!");
-
-const users = await db.select().from(usersTable);
-console.log("Getting all users from the database: ", users);
-/*
-  const users: {
-    id: number;
-    name: string;
-    age: number;
-    email: string;
-  }[]
-  */
-
-await db
-  .update(usersTable)
-  .set({
-    age: 31,
-  })
-  .where(eq(usersTable.email, user.email));
-console.log("User info updated!");
-
-await db.delete(usersTable).where(eq(usersTable.email, user.email));
-console.log("User deleted!");
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`);
+});
