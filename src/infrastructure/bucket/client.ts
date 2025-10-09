@@ -1,6 +1,5 @@
 import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
-// === CONFIG ===
 const s3 = new S3Client({
   endpoint: "http://localhost:9000",
   region: "us-east-1",
