@@ -1,50 +1,68 @@
+import { multerMiddleware } from "#http/middleware/multer.js";
+import { NamespaceDao } from "#services/dao/namespace-dao.js";
+import { ResourceDao } from "#services/dao/resource-dao.js";
+import { UserDao } from "#services/dao/user-dao.js";
 import { Request, Response, Router } from "express";
-import multer from "multer";
 
 const resourceRouter = Router();
 
-const upload = multer({ storage: multer.memoryStorage() });
-
-resourceRouter.post(
-  "/*wildcard",
-  upload.single("file"),
-
-  // @ts-expect-error
-  async (req: Request<{ wildcard: string[] }>, res: Response) => {
+resourceRouter.get("/*wildcard", async (req: Request<{ wildcard: string[] }>, res) => {
     const wildcard = req.params.wildcard;
     if (wildcard.length <= 0) {
-      res.status(400);
-      return;
+        res.status(400);
+        return;
     }
-    const namespace = "/" + wildcard.slice(0, -1).join("/");
+    const namespaceId = "/" + wildcard.slice(0, -1).join("/");
     const key = wildcard.at(-1)!;
 
-    res.status(200).send();
-  },
-);
+    const resource = await ResourceDao.findById({ id: key, namespaceId });
 
-resourceRouter.get("/*wildcard", async (req: Request<{ wildcard: string[] }>, res) => {
-  const wildcard = req.params.wildcard;
-  if (wildcard.length <= 0) {
-    res.status(400);
-    return;
-  }
-  const namespace = "/" + wildcard.slice(0, -1).join("/");
-  const key = wildcard.at(-1)!;
-
-  res.status(200).send();
+    res.status(200).json(resource);
 });
 
-resourceRouter.delete("/*wildcard", async (req: Request<{ wildcard: string[] }>, res) => {
-  const wildcard = req.params.wildcard;
-  if (wildcard.length <= 0) {
-    res.status(400);
-    return;
-  }
-  const namespace = "/" + wildcard.slice(0, -1).join("/");
-  const key = wildcard.at(-1)!;
+resourceRouter.put(
+    "/*wildcard",
+    multerMiddleware.single("file"),
+    // @ts-expect-error
+    async (req: Request<{ wildcard: string[] }>, res: Response) => {
+        const wildcard = req.params.wildcard;
+        if (wildcard.length <= 0) {
+            res.status(400);
+            return;
+        }
+        const namespaceId = "/" + wildcard.slice(0, -1).join("/");
+        const key = wildcard.at(-1)!;
 
-  res.status(200).send();
+        const user = (await UserDao.all())[0]!;
+
+        const namespace = await NamespaceDao.findById(namespaceId);
+        if (!namespace) {
+            await NamespaceDao.create({ id: namespaceId, userId: user.id });
+        }
+
+        const result = await ResourceDao.create({
+            id: key,
+            namespaceId,
+            userId: user.id,
+            contentType: "nothing for now",
+        });
+
+        res.status(204).send();
+    }
+);
+
+resourceRouter.delete("/*wildcard", async (req: Request<{ wildcard: string[] }>, res) => {
+    const wildcard = req.params.wildcard;
+    if (wildcard.length <= 0) {
+        res.status(400);
+        return;
+    }
+    const namespaceId = "/" + wildcard.slice(0, -1).join("/");
+    const key = wildcard.at(-1)!;
+
+    const result = await ResourceDao.delete({ id: key, namespaceId });
+
+    res.status(204).send();
 });
 
 export default resourceRouter;

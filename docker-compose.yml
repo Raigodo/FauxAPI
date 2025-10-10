@@ -1,47 +1,47 @@
 version: "3.8"
 
 services:
-  database:
-    image: postgres:16
-    container_name: postgres_db
-    restart: always
-    environment:
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: faux_api
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-  bucket:
-    image: "quay.io/minio/minio:RELEASE.2025-03-12T18-04-18Z"
-    container_name: minio
-    restart: unless-stopped
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    volumes:
-      - minio_data:/data
-    command: server /data --console-address ":9001"
-  createbuckets:
-    image: quay.io/minio/mc:RELEASE.2025-03-12T17-29-24Z
-    depends_on:
-      - bucket
-    restart: on-failure
-    entrypoint: >
-      /bin/sh -c "
-      sleep 5;
-      /usr/bin/mc alias set dockerminio http://bucket:9000 minioadmin minioadmin;
-      /usr/bin/mc mb dockerminio/faux-api-bucket;
-
-      exit 0;
-      "
+    database:
+        image: postgres:16
+        container_name: postgres_db
+        restart: always
+        environment:
+            POSTGRES_USER: myuser
+            POSTGRES_PASSWORD: mypassword
+            POSTGRES_DB: faux_api
+        ports:
+            - "5432:5432"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+    bucket:
+        image: "quay.io/minio/minio:RELEASE.2025-03-12T18-04-18Z"
+        container_name: minio
+        restart: unless-stopped
+        ports:
+            - "9000:9000"
+            - "9001:9001"
+        environment:
+            MINIO_ROOT_USER: ${BUCKET_ACCESS_KEY_ID}
+            MINIO_ROOT_PASSWORD: ${BUCKET_SECRET_ACCESS_KEY}
+        volumes:
+            - minio_data:/data
+        command: server /data --console-address ":9001"
+    createbuckets:
+        image: quay.io/minio/mc:RELEASE.2025-03-12T17-29-24Z
+        depends_on:
+            - bucket
+        restart: on-failure
+        entrypoint: >
+            /bin/sh -c "
+            sleep 5;
+            /usr/bin/mc alias set dockerminio http://bucket:9000 ${BUCKET_ACCESS_KEY_ID} ${BUCKET_SECRET_ACCESS_KEY};
+            /usr/bin/mc mb dockerminio/${BUCKET_RESOURCES};
+            /usr/bin/mc mb dockerminio/${BUCKET_SYSTEM};
+            exit 0;
+            "
 
 volumes:
-  postgres_data:
-    driver: local
-  minio_data:
-    driver: local
+    postgres_data:
+        driver: local
+    minio_data:
+        driver: local

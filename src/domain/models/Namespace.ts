@@ -1,4 +1,4 @@
 export type Namespace = {
-  id: string;
-  userId: string;
+    id: string;
+    userId: string;
 };
