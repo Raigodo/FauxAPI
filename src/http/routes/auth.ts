@@ -14,9 +14,14 @@ authRouter.post(
     "/register",
     multerMiddleware.none(),
     async (
-        req: Request<{}, {}, { username: string; password: string; nickname: string }>,
+        req: Request<{}, {}, { username?: string; password?: string; nickname?: string }>,
         res: Response
     ) => {
+        if (!(req.body.nickname && req.body.username && req.body.password)) {
+            res.sendStatus(400);
+            return;
+        }
+
         let user = await UserDao.findByUsername(req.body.username);
         if (user) {
             res.sendStatus(400);
@@ -40,7 +45,12 @@ authRouter.post(
 authRouter.post(
     "/login",
     multerMiddleware.none(),
-    async (req: Request<{}, {}, { username: string; password: string }>, res: Response) => {
+    async (req: Request<{}, {}, { username?: string; password?: string }>, res: Response) => {
+        if (!req.body.username || !req.body.password) {
+            res.sendStatus(400);
+            return;
+        }
+
         let user = await UserDao.findByUsername(req.body.username);
 
         if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
@@ -61,7 +71,12 @@ authRouter.post(
 authRouter.post(
     "/refresh",
     multerMiddleware.none(),
-    async (req: Request<{}, {}, { refreshToken: string }>, res: Response) => {
+    async (req: Request<{}, {}, { refreshToken?: string }>, res: Response) => {
+        if (!req.body.refreshToken) {
+            res.sendStatus(400);
+            return;
+        }
+
         const token = req.body.refreshToken;
         if (!token || !(await RefreshTokenDao.findByValue(token))) {
             res.sendStatus(401);
