@@ -1,33 +1,23 @@
+import { authenticateMiddleware } from "#http/middleware/authenticate.js";
 import { multerMiddleware } from "#http/middleware/multer.js";
 import { UserDao } from "#services/dao/user-dao.js";
 import { Router } from "express";
-import { v4 as uuidv4 } from "uuid";
 
 const usersRouter = Router();
 
-usersRouter.get("/", async (req, res) => {
+usersRouter.get("/", authenticateMiddleware, async (req, res) => {
     const users = await UserDao.all();
-    return res.status(200).json(users);
+    return res.json(users);
 });
 
-usersRouter.get("/:id", async (req, res) => {
+usersRouter.get("/:id", authenticateMiddleware, async (req, res) => {
     const user = await UserDao.findById(req.params.id);
-    return res.status(200).json(user);
+    return res.json(user);
 });
 
-usersRouter.post("/", multerMiddleware.none(), async (req, res) => {
-    const result = await UserDao.create({
-        id: uuidv4(),
-        nickname: req.body.nickname,
-        username: req.body.username,
-        password: req.body.password,
-    });
-    res.status(204).send();
-});
-
-usersRouter.delete("/:id", multerMiddleware.none(), async (req, res) => {
+usersRouter.delete("/:id", authenticateMiddleware, multerMiddleware.none(), async (req, res) => {
     const result = await UserDao.delete(req.params.id);
-    res.status(204).send();
+    res.sendStatus(204);
 });
 
 export default usersRouter;

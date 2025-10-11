@@ -8,6 +8,13 @@ export const userTable = pgTable("users", {
     password: varchar("password").notNull(),
 });
 
+export const refreshTokenTable = pgTable("refresh_tokens", {
+    userId: varchar("user_id")
+        .primaryKey()
+        .references(() => userTable.id, { onDelete: "cascade" }),
+    token: varchar("value").notNull().unique(),
+});
+
 export const namespaceTable = pgTable("namespaces", {
     id: varchar("id").primaryKey(),
     userId: varchar("user_id")
@@ -26,9 +33,15 @@ export const resourceTable = pgTable("resources", {
         .references(() => userTable.id, { onDelete: "restrict" }),
 });
 
+//
+
 export const usersRelations = relations(userTable, ({ many }) => ({
     namespaces: many(namespaceTable),
     resources: many(resourceTable),
+}));
+
+export const refreshTokenRelations = relations(refreshTokenTable, ({ one }) => ({
+    user: one(userTable, { fields: [refreshTokenTable.userId], references: [userTable.id] }),
 }));
 
 export const namespacesRelations = relations(namespaceTable, ({ one, many }) => ({

@@ -38,11 +38,15 @@
     "dependencies": {
         "@aws-sdk/client-s3": "^3.907.0",
         "@aws-sdk/s3-request-presigner": "^3.907.0",
+        "@types/bcrypt": "^6.0.0",
+        "@types/jsonwebtoken": "^9.0.10",
         "@types/multer": "^2.0.0",
+        "bcrypt": "^6.0.0",
         "dotenv": "^17.2.3",
         "drizzle-orm": "^0.44.6",
         "drizzle-seed": "^0.3.1",
         "express": "^5.1.0",
+        "jsonwebtoken": "^9.0.2",
         "multer": "^2.0.2",
         "pg": "^8.16.3",
         "uuid": "^13.0.0"

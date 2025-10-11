@@ -1,3 +1,4 @@
+import { authenticateMiddleware } from "#http/middleware/authenticate.js";
 import { multerMiddleware } from "#http/middleware/multer.js";
 import { NamespaceDao } from "#services/dao/namespace-dao.js";
 import { ResourceDao } from "#services/dao/resource-dao.js";
@@ -6,28 +7,33 @@ import { Request, Response, Router } from "express";
 
 const resourceRouter = Router();
 
-resourceRouter.get("/*wildcard", async (req: Request<{ wildcard: string[] }>, res) => {
-    const wildcard = req.params.wildcard;
-    if (wildcard.length <= 0) {
-        res.status(400);
-        return;
+resourceRouter.get(
+    "/*wildcard",
+    authenticateMiddleware,
+    // @ts-expect-error
+    async (req: Request<{ wildcard: string[] }>, res) => {
+        const wildcard = req.params.wildcard;
+        if (wildcard.length <= 0) {
+            res.sendStatus(400);
+            return;
+        }
+        const namespaceId = "/" + wildcard.slice(0, -1).join("/");
+        const key = wildcard.at(-1)!;
+
+        const resource = await ResourceDao.findById({ id: key, namespaceId });
+
+        res.json(resource);
     }
-    const namespaceId = "/" + wildcard.slice(0, -1).join("/");
-    const key = wildcard.at(-1)!;
-
-    const resource = await ResourceDao.findById({ id: key, namespaceId });
-
-    res.status(200).json(resource);
-});
+);
 
 resourceRouter.put(
     "/*wildcard",
-    multerMiddleware.single("file"),
+    [authenticateMiddleware, multerMiddleware.single("file")],
     // @ts-expect-error
     async (req: Request<{ wildcard: string[] }>, res: Response) => {
         const wildcard = req.params.wildcard;
         if (wildcard.length <= 0) {
-            res.status(400);
+            res.sendStatus(400);
             return;
         }
         const namespaceId = "/" + wildcard.slice(0, -1).join("/");
@@ -47,22 +53,27 @@ resourceRouter.put(
             contentType: "nothing for now",
         });
 
-        res.status(204).send();
+        res.sendStatus(204);
     }
 );
 
-resourceRouter.delete("/*wildcard", async (req: Request<{ wildcard: string[] }>, res) => {
-    const wildcard = req.params.wildcard;
-    if (wildcard.length <= 0) {
-        res.status(400);
-        return;
+resourceRouter.delete(
+    "/*wildcard",
+    authenticateMiddleware,
+    // @ts-expect-error
+    async (req: Request<{ wildcard: string[] }>, res) => {
+        const wildcard = req.params.wildcard;
+        if (wildcard.length <= 0) {
+            res.sendStatus(400);
+            return;
+        }
+        const namespaceId = "/" + wildcard.slice(0, -1).join("/");
+        const key = wildcard.at(-1)!;
+
+        const result = await ResourceDao.delete({ id: key, namespaceId });
+
+        res.sendStatus(204);
     }
-    const namespaceId = "/" + wildcard.slice(0, -1).join("/");
-    const key = wildcard.at(-1)!;
-
-    const result = await ResourceDao.delete({ id: key, namespaceId });
-
-    res.status(204).send();
-});
+);
 
 export default resourceRouter;
