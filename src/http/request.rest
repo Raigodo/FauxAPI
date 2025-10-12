@@ -1,5 +1,5 @@
 GET http://localhost:3000/api/users
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyZWZkNTNiZS1jYTJiLTQ3NDktOGM1MC0wNTVhZWE4NDQ0NjUiLCJpYXQiOjE3NjAxOTY2OTcsImV4cCI6MTc2MDE5NjcxMn0.7kMEXmU5TjO5ZaHZYTr1Zg301P0gUCP4iVHTlktEz-g
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlYzE2MTRlMi0xMTQ4LTRiOWQtYjYxZC0wN2QyMTQzMTc4ODMiLCJpYXQiOjE3NjAyODkxMDIsImV4cCI6MTc2MDI5MDAwMn0.XGCqU8dbiOWLkPMQSpSp7h-FXXC1iTyeQPes5wQ1P58
 
 ###
 
@@ -9,7 +9,7 @@ Content-Type: application/json
 {
 	"nickname": "user one",
 	"username": "myusername",
-	"password": "mypassword"
+	"password": "P@55w0rd"
 }
 
 ###
@@ -19,7 +19,7 @@ Content-Type: application/json
 
 {
 	"username": "myusername",
-	"password": "mypassword"
+	"password": "P@55w0rd"
 }
 
 ###

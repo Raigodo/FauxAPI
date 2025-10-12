@@ -5,7 +5,7 @@ import { RefreshTokenDao } from "./dao/refresh-token-dao.js";
 
 export function generateAccessToken(user: User) {
     return jwt.sign({ userId: user.id }, process.env.ACCESS_TOKEN_SECRET!, {
-        expiresIn: "15s",
+        expiresIn: "15m",
     });
 }
 
@@ -20,11 +20,28 @@ export function veriffyAccessToken(
 ): { valid: false } | { valid: true; payload: { userId: string } } {
     let refreshPayload: { userId: string } | undefined;
 
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!, (err, user) => {
+        if (err) {
+            return { valid: false };
+        }
+        refreshPayload = { userId: (user as JwtPayload).userId as string };
+    });
+
+    return {
+        valid: true,
+        payload: refreshPayload!,
+    };
+}
+
+export function veriffyRefreshToken(
+    token: string
+): { valid: false } | { valid: true; payload: { userId: string } } {
+    let refreshPayload: { userId: string } | undefined;
+
     jwt.verify(token, process.env.REFRESH_TOKEN_SECRET!, (err, user) => {
         if (err) {
             return { valid: false };
         }
-
         refreshPayload = { userId: (user as JwtPayload).userId as string };
     });
 

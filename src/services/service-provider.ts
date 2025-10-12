@@ -1,5 +1,5 @@
 import s3 from "#infrastructure/bucket/client.js";
-import db from "#infrastructure/database/client.js";
+import db from "#infrastructure/database/client.pg.js";
 
 const services = new Map<string, unknown>();
 

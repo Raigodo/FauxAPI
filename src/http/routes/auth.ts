@@ -1,8 +1,9 @@
 import { authenticateMiddleware } from "#http/middleware/authenticate.js";
+import { exceptionMiddleware } from "#http/middleware/exception-middleware.js";
 import { multerMiddleware } from "#http/middleware/multer.js";
 import { RefreshTokenDao } from "#services/dao/refresh-token-dao.js";
 import { UserDao } from "#services/dao/user-dao.js";
-import { generateAccessToken, generateRefreshToken, veriffyAccessToken } from "#services/jwt.js";
+import { generateAccessToken, generateRefreshToken, veriffyRefreshToken } from "#services/jwt.js";
 import bcrypt from "bcrypt";
 import { Router } from "express";
 import { Request, Response } from "express-serve-static-core";
@@ -12,7 +13,7 @@ const authRouter = Router();
 
 authRouter.post(
     "/register",
-    multerMiddleware.none(),
+    [exceptionMiddleware, multerMiddleware.none()],
     async (
         req: Request<{}, {}, { username?: string; password?: string; nickname?: string }>,
         res: Response
@@ -44,7 +45,7 @@ authRouter.post(
 
 authRouter.post(
     "/login",
-    multerMiddleware.none(),
+    [exceptionMiddleware, multerMiddleware.none()],
     async (req: Request<{}, {}, { username?: string; password?: string }>, res: Response) => {
         if (!req.body.username || !req.body.password) {
             res.sendStatus(400);
@@ -59,7 +60,7 @@ authRouter.post(
         }
 
         const accessToken = generateAccessToken(user);
-        const refreshToken = generateRefreshToken(user);
+        const refreshToken = await generateRefreshToken(user);
 
         res.json({
             accessToken,
@@ -70,20 +71,20 @@ authRouter.post(
 
 authRouter.post(
     "/refresh",
-    multerMiddleware.none(),
+    [exceptionMiddleware, multerMiddleware.none()],
     async (req: Request<{}, {}, { refreshToken?: string }>, res: Response) => {
         if (!req.body.refreshToken) {
             res.sendStatus(400);
             return;
         }
 
-        const token = req.body.refreshToken;
-        if (!token || !(await RefreshTokenDao.findByValue(token))) {
+        const refreshToken = req.body.refreshToken;
+        if (!refreshToken || !(await RefreshTokenDao.findByValue(refreshToken))) {
             res.sendStatus(401);
             return;
         }
 
-        const veriffyResult = veriffyAccessToken(token);
+        const veriffyResult = veriffyRefreshToken(refreshToken);
 
         if (!veriffyResult.valid) {
             res.sendStatus(403);
@@ -92,16 +93,16 @@ authRouter.post(
 
         const user = await UserDao.findById(veriffyResult.payload.userId);
 
-        const accessToken = generateAccessToken(user);
-        const refreshToken = generateRefreshToken(user);
+        const newAccessToken = generateAccessToken(user);
+        const newRefreshToken = await generateRefreshToken(user);
 
-        res.json({ accessToken, refreshToken });
+        res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
     }
 );
 
 authRouter.delete(
     "/logout",
-    [authenticateMiddleware, multerMiddleware.none()],
+    [exceptionMiddleware, authenticateMiddleware, multerMiddleware.none()],
     async (req: Request, res: Response) => {
         const userId = req.session.userId;
         await RefreshTokenDao.delete(userId);

@@ -1,5 +1,4 @@
 import { Resource } from "#domain/models/Resource.js";
-import { resourceTable } from "#infrastructure/database/schema.pg.js";
 import { serviceProvider } from "#services/service-provider.js";
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -8,11 +7,11 @@ import { and, eq } from "drizzle-orm";
 
 export const ResourceDao = {
     findByNamespaceId: (namespaceId: Resource["namespaceId"]) => {
-        const db = serviceProvider.getDatabase();
+        const { db, resourceTable } = serviceProvider.getDatabase();
         return db.select().from(resourceTable).where(eq(resourceTable.namespaceId, namespaceId));
     },
     findById: async (params: { id: Resource["id"]; namespaceId: Resource["namespaceId"] }) => {
-        const db = serviceProvider.getDatabase();
+        const { db, resourceTable } = serviceProvider.getDatabase();
         const s3 = serviceProvider.getBucket();
         const command = new GetObjectCommand({
             Bucket: process.env.BUCKET_RESOURCES,
@@ -33,7 +32,7 @@ export const ResourceDao = {
         return { ...model, url };
     },
     findDetailById: (params: { id: Resource["id"]; namespaceId: Resource["namespaceId"] }) => {
-        const db = serviceProvider.getDatabase();
+        const { db, resourceTable } = serviceProvider.getDatabase();
         return db
             .select()
             .from(resourceTable)
@@ -46,7 +45,7 @@ export const ResourceDao = {
             .then((rows) => rows[0] ?? null);
     },
     create: async (data: Resource) => {
-        const db = serviceProvider.getDatabase();
+        const { db, resourceTable } = serviceProvider.getDatabase();
         const s3 = serviceProvider.getBucket();
         await s3.send(
             new PutObjectCommand({
@@ -59,7 +58,7 @@ export const ResourceDao = {
         return await db.insert(resourceTable).values(data);
     },
     update: (data: Pick<Resource, "id" | "userId" | "namespaceId">) => {
-        const db = serviceProvider.getDatabase();
+        const { db, resourceTable } = serviceProvider.getDatabase();
         return db
             .update(resourceTable)
             .set({ userId: data.userId })
@@ -68,7 +67,7 @@ export const ResourceDao = {
             );
     },
     delete: async (params: { id: Resource["id"]; namespaceId: Resource["namespaceId"] }) => {
-        const db = serviceProvider.getDatabase();
+        const { db, resourceTable } = serviceProvider.getDatabase();
         const s3 = serviceProvider.getBucket();
         await s3.send(
             new DeleteObjectCommand({

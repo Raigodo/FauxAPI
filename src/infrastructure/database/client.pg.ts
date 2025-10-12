@@ -7,4 +7,10 @@ const db = drizzle(process.env.DATABASE_URL!, {
     schema: schemas,
 });
 
-export default db;
+export default {
+    db,
+    userTable: schemas.userTable,
+    namespaceTable: schemas.namespaceTable,
+    refreshTokenTable: schemas.refreshTokenTable,
+    resourceTable: schemas.resourceTable,
+};
