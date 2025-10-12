@@ -1,23 +1,26 @@
 import { Namespace } from "#domain/models/Namespace.js";
-import db from "#infrastructure/database/client.js";
-import { namespaceTable } from "#infrastructure/database/schema.js";
+import { namespaceTable } from "#infrastructure/database/schema.pg.js";
+import { serviceProvider } from "#services/service-provider.js";
 import { and, eq, like, ne } from "drizzle-orm";
 import { ResourceDao } from "./resource-dao.js";
 
 export const NamespaceDao = {
     findChildren: (id: Namespace["id"]) => {
+        const db = serviceProvider.getDatabase();
         return db
             .select()
             .from(namespaceTable)
             .where(and(like(namespaceTable.id, `${id}%`), ne(namespaceTable.id, id)));
     },
     findRootsByUserId: (userId: Namespace["userId"]) => {
+        const db = serviceProvider.getDatabase();
         return db
             .select()
             .from(namespaceTable)
             .where(and(eq(namespaceTable.userId, userId), eq(namespaceTable.id, "/")));
     },
     findById: (id: Namespace["id"]) => {
+        const db = serviceProvider.getDatabase();
         return db
             .select()
             .from(namespaceTable)
@@ -25,6 +28,7 @@ export const NamespaceDao = {
             .then((rows) => rows[0] ?? null);
     },
     findDetailById: (id: Namespace["id"]) => {
+        const db = serviceProvider.getDatabase();
         return db
             .select()
             .from(namespaceTable)
@@ -32,15 +36,19 @@ export const NamespaceDao = {
             .then((rows) => rows[0] ?? null);
     },
     create: (data: Namespace) => {
+        const db = serviceProvider.getDatabase();
         return db.insert(namespaceTable).values(data);
     },
     update: (data: Pick<Namespace, "id" | "userId">) => {
+        const db = serviceProvider.getDatabase();
         return db
             .update(namespaceTable)
             .set({ userId: data.userId })
             .where(eq(namespaceTable.id, data.id));
     },
     delete: async (id: Namespace["id"]) => {
+        const db = serviceProvider.getDatabase();
+
         const resources = await ResourceDao.findByNamespaceId(id);
         await Promise.all(
             resources.map((resource) =>
