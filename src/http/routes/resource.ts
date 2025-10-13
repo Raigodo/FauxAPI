@@ -3,6 +3,7 @@ import { multerMiddleware } from "#http/middleware/multer.js";
 import { NamespaceDao } from "#services/dao/namespace-dao.js";
 import { ResourceDao } from "#services/dao/resource-dao.js";
 import { UserDao } from "#services/dao/user-dao.js";
+import "dotenv/config";
 import { Request, Response, Router } from "express";
 
 const resourceRouter = Router();
@@ -20,7 +21,12 @@ resourceRouter.get(
         const namespaceId = "/" + wildcard.slice(0, -1).join("/");
         const key = wildcard.at(-1)!;
 
-        const resource = await ResourceDao.findById({ id: key, namespaceId });
+        const resource = await ResourceDao.findDetailById({ id: key, namespaceId });
+
+        if (!resource) {
+            res.sendStatus(404);
+            return;
+        }
 
         res.json(resource);
     }
@@ -39,18 +45,32 @@ resourceRouter.put(
         const namespaceId = "/" + wildcard.slice(0, -1).join("/");
         const key = wildcard.at(-1)!;
 
-        const user = (await UserDao.all())[0]!;
+        const user = await UserDao.findById(req.session.userId);
 
-        const namespace = await NamespaceDao.findById(namespaceId);
-        if (!namespace) {
+        let body: Buffer | string;
+        let contentType: string;
+
+        if (req.file) {
+            contentType = req.file!.mimetype || "application/octet-stream";
+            body = req.file.buffer;
+        } else if (Object.keys(req.body).length > 0) {
+            contentType = "application/json";
+            body = JSON.stringify(req.body, null, 2);
+        } else {
+            return res.status(400).json({ error: "No file or JSON data provided" });
+        }
+
+        let ns = await NamespaceDao.findById(namespaceId);
+        if (!ns) {
             await NamespaceDao.create({ id: namespaceId, userId: user.id });
         }
 
-        const result = await ResourceDao.create({
+        await ResourceDao.create({
             id: key,
             namespaceId,
             userId: user.id,
-            contentType: "nothing for now",
+            contentType,
+            payload: body,
         });
 
         res.sendStatus(204);

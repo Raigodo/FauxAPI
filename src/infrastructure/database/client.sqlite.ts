@@ -4,7 +4,7 @@ import { drizzle } from "drizzle-orm/libsql";
 
 export function createSqliteClient() {
     const client = createClient({ url: ":memory:" });
-    let db = drizzle(client, { schema: schemas, logger: true });
+    let db = drizzle(client, { schema: schemas, logger: false });
 
     return {
         client,

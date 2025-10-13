@@ -1,7 +1,8 @@
-import { S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import "dotenv/config";
 
-const s3 = new S3Client({
+const s3Client = new S3Client({
     endpoint: process.env.BUCKET_ENDPOINT!,
     region: process.env.BUCKET_REGION!,
     credentials: {
@@ -11,4 +12,15 @@ const s3 = new S3Client({
     forcePathStyle: process.env.BUCKET_FORCE_PATH_STYLE! as unknown as boolean,
 });
 
-export default s3;
+(s3Client as any).getSignedUrl = async (key: string) => {
+    const command = new GetObjectCommand({
+        Bucket: process.env.BUCKET_RESOURCES,
+        Key: key,
+    });
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 30 });
+    return url;
+};
+
+export default s3Client as S3Client & {
+    getSignedUrl: (key: string) => Promise<string>;
+};

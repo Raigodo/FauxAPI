@@ -1,5 +1,5 @@
 import app from "#app.js";
-import { fakeS3 } from "#infrastructure/bucket/client.fake.js";
+import fakeS3 from "#infrastructure/bucket/client.fake.js";
 import { createSqliteClient } from "#infrastructure/database/client.sqlite.js";
 import { serviceProvider } from "#services/service-provider.js";
 import { migrate } from "drizzle-orm/libsql/migrator";

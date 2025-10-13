@@ -18,8 +18,6 @@ export const UserDao = {
     },
     findByUsername: (username: User["username"]) => {
         const { db, userTable } = serviceProvider.getDatabase();
-        console.log(userTable);
-
         return db
             .select()
             .from(userTable)
