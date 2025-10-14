@@ -53,7 +53,7 @@ resourceRouter.put(
         if (req.file) {
             contentType = req.file!.mimetype || "application/octet-stream";
             body = req.file.buffer;
-        } else if (Object.keys(req.body).length > 0) {
+        } else if (req.body && Object.keys(req.body).length > 0) {
             contentType = "application/json";
             body = JSON.stringify(req.body, null, 2);
         } else {

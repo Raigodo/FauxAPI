@@ -53,19 +53,30 @@ describe("Resource Routes", () => {
     describe("PUT /put/:namespace*/:key", () => {
         it("should store a JSON resource", async () => {
             const { accessToken } = await createUserAndLogin();
-
             const res = await supertest(app)
                 .put("/api/resources/a/b/c/value")
                 .set("Authorization", `Bearer ${accessToken}`)
                 .field("data", JSON.stringify({ text: "hello world" }));
+            expect(res.status).toBe(204);
+        });
+
+        it("should store a text file resource", async () => {
+            const { accessToken } = await createUserAndLogin();
+
+            const filePath = path.resolve("./src/__tests__/fixtures/text.txt");
+
+            const res = await supertest(app)
+                .put("/api/resources/a/b/c/value")
+                .set("Authorization", `Bearer ${accessToken}`)
+                .attach("file", filePath);
 
             expect(res.status).toBe(204);
         });
 
-        it("should store a file resource", async () => {
+        it("should store a image file resource", async () => {
             const { accessToken } = await createUserAndLogin();
 
-            const filePath = path.resolve("./src/__tests__/fixtures/sample.txt");
+            const filePath = path.resolve("./src/__tests__/fixtures/img.jpg");
 
             const res = await supertest(app)
                 .put("/api/resources/a/b/c/value")
@@ -98,14 +109,56 @@ describe("Resource Routes", () => {
                 .set("Authorization", `Bearer ${accessToken}`);
 
             expect(res.status).toBe(200);
-            expect(res.body.payload).toEqual({ text: "my data" });
+            expect(res.body.payload).toBeDefined();
+            expect(res.body.payload.toString()).toBe({ text: "my data" }.toString());
+            expect(res.body.url).toBeUndefined();
+        });
+
+        it("should fetch an existing JSON resource", async () => {
+            const { accessToken } = await createUserAndLogin();
+
+            const filePath = path.resolve("./src/__tests__/fixtures/text.txt");
+
+            await supertest(app)
+                .put("/api/resources/a/b/c/value")
+                .set("Authorization", `Bearer ${accessToken}`)
+                .attach("file", filePath);
+
+            const res = await supertest(app)
+                .get("/api/resources/a/b/c/value")
+                .set("Authorization", `Bearer ${accessToken}`);
+
+            expect(res.status).toBe(200);
+            expect(res.body.payload).toBeUndefined();
+            expect(res.body.url).toBeDefined();
+        });
+
+        it("test name", async () => {
+            const { accessToken } = await createUserAndLogin();
+
+            const filePath = path.resolve("./src/__tests__/fixtures/img.jpg");
+
+            await supertest(app)
+                .put("/api/resources/a/b/c/value")
+                .set("Authorization", `Bearer ${accessToken}`)
+                .attach("file", filePath);
+
+            const res = await supertest(app)
+                .get("/api/resources/a/b/c/value")
+                .set("Authorization", `Bearer ${accessToken}`);
+
+            expect(res.status).toBe(200);
+            expect(res.body.payload).toBeUndefined();
+            expect(res.body.url).toBeDefined();
         });
 
         it("should return 404 for non-existent resource", async () => {
             const { accessToken } = await createUserAndLogin();
+
             const res = await supertest(app)
-                .get("/api/resources/a/b/c/value")
+                .get("/api/resources/a/b/c/no-value")
                 .set("Authorization", `Bearer ${accessToken}`);
+
             expect(res.status).toBe(404);
         });
     });
