@@ -1,11 +1,11 @@
-import app from "#app.js";
-import fakeS3 from "#infrastructure/bucket/client.fake.js";
-import { createSqliteClient } from "#infrastructure/database/client.sqlite.js";
-import { serviceProvider } from "#services/service-provider.js";
 import { migrate } from "drizzle-orm/libsql/migrator";
 import path from "node:path";
 import supertest from "supertest";
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import app from "../../app.js";
+import fakeS3 from "../../infrastructure/bucket/client.fake.js";
+import { createSqliteClient } from "../../infrastructure/database/client.sqlite.js";
+import { serviceProvider } from "../../services/service-provider.js";
 
 const sqlite = createSqliteClient();
 

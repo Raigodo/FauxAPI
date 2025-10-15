@@ -1,0 +1,15 @@
+# Use Node slim for small image
+FROM node:23.11.1-slim
+
+WORKDIR /migrate
+
+# Copy only what’s needed
+COPY package.json package-lock.json* ./
+COPY drizzle.config.ts ./
+COPY src/infrastructure/database ./src/infrastructure/database
+
+# Install required Node packages
+RUN npm install drizzle-orm pg dotenv drizzle-kit tsx @types/pg
+
+# Default command: generate migrations and apply them programmatically
+CMD sh -c "npx drizzle-kit generate --config drizzle.config.ts && npx tsx src/infrastructure/database/migrate.pg.ts"

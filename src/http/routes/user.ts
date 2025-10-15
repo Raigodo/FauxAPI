@@ -1,7 +1,7 @@
-import { authenticateMiddleware } from "#http/middleware/authenticate.js";
-import { multerMiddleware } from "#http/middleware/multer.js";
-import { UserDao } from "#services/dao/user-dao.js";
 import { Router } from "express";
+import { UserDao } from "../../services/dao/user-dao.js";
+import { authenticateMiddleware } from "../middleware/authenticate.js";
+import { multerMiddleware } from "../middleware/multer.js";
 
 const usersRouter = Router();
 

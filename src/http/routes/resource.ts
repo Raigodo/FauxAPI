@@ -1,10 +1,10 @@
-import { authenticateMiddleware } from "#http/middleware/authenticate.js";
-import { multerMiddleware } from "#http/middleware/multer.js";
-import { NamespaceDao } from "#services/dao/namespace-dao.js";
-import { ResourceDao } from "#services/dao/resource-dao.js";
-import { UserDao } from "#services/dao/user-dao.js";
 import "dotenv/config";
 import { Request, Response, Router } from "express";
+import { NamespaceDao } from "../../services/dao/namespace-dao.js";
+import { ResourceDao } from "../../services/dao/resource-dao.js";
+import { UserDao } from "../../services/dao/user-dao.js";
+import { authenticateMiddleware } from "../middleware/authenticate.js";
+import { multerMiddleware } from "../middleware/multer.js";
 
 const resourceRouter = Router();
 

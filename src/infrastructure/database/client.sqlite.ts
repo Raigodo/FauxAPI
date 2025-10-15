@@ -1,6 +1,6 @@
-import * as schemas from "#infrastructure/database/schema.sqlite.js";
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
+import * as schemas from "./schema.sqlite.js";
 
 export function createSqliteClient() {
     const client = createClient({ url: ":memory:" });

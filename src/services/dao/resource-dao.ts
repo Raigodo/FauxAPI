@@ -1,8 +1,8 @@
-import { Resource } from "#domain/models/Resource.js";
-import { serviceProvider } from "#services/service-provider.js";
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import "dotenv/config";
 import { and, eq } from "drizzle-orm";
+import { Resource } from "../../domain/models/Resource.js";
+import { serviceProvider } from "../service-provider.js";
 
 export const ResourceDao = {
     findByNamespaceId: (namespaceId: Resource["namespaceId"]) => {

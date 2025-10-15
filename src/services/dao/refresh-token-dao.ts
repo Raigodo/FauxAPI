@@ -1,6 +1,6 @@
-import { RefreshToken } from "#domain/models/RefreshToken.js";
-import { serviceProvider } from "#services/service-provider.js";
 import { eq } from "drizzle-orm";
+import { RefreshToken } from "../../domain/models/RefreshToken.js";
+import { serviceProvider } from "../service-provider.js";
 
 export const RefreshTokenDao = {
     findByUserId: (userId: RefreshToken["userId"]) => {

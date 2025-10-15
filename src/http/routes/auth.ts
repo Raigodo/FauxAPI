@@ -1,13 +1,17 @@
-import { authenticateMiddleware } from "#http/middleware/authenticate.js";
-import { exceptionMiddleware } from "#http/middleware/exception-middleware.js";
-import { multerMiddleware } from "#http/middleware/multer.js";
-import { RefreshTokenDao } from "#services/dao/refresh-token-dao.js";
-import { UserDao } from "#services/dao/user-dao.js";
-import { generateAccessToken, generateRefreshToken, veriffyRefreshToken } from "#services/jwt.js";
 import bcrypt from "bcrypt";
 import { Router } from "express";
 import { Request, Response } from "express-serve-static-core";
 import { v4 as uuidv4 } from "uuid";
+import { RefreshTokenDao } from "../../services/dao/refresh-token-dao.js";
+import { UserDao } from "../../services/dao/user-dao.js";
+import {
+    generateAccessToken,
+    generateRefreshToken,
+    veriffyRefreshToken,
+} from "../../services/jwt.js";
+import { authenticateMiddleware } from "../middleware/authenticate.js";
+import { exceptionMiddleware } from "../middleware/exception-middleware.js";
+import { multerMiddleware } from "../middleware/multer.js";
 
 const authRouter = Router();
 

@@ -1,6 +1,6 @@
-import { User } from "#domain/models/User.js";
-import { serviceProvider } from "#services/service-provider.js";
 import { eq } from "drizzle-orm";
+import { User } from "../../domain/models/User.js";
+import { serviceProvider } from "../service-provider.js";
 import { NamespaceDao } from "./namespace-dao.js";
 
 export const UserDao = {

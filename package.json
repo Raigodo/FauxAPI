@@ -7,13 +7,12 @@
     "scripts": {
         "dev": "tsx --watch src/index.ts",
         "build": "tsc -p tsconfig.build.json",
-        "db:generate": "npx drizzle-kit generate --config=drizzle.config.ts",
-        "db:push": "npx drizzle-kit push --config=drizzle.config.ts",
+        "db:generate": "npx drizzle-kit generate",
+        "db:push": "npx drizzle-kit push",
         "db:seed": "npm i drizzle-seed",
         "db:generate:test": "npx drizzle-kit generate --config=drizzle.sqlite.config.ts",
         "test": "npm run db:generate:test && vitest",
-        "test:run": "npm run db:generate:test && vitest --run",
-        "prepare": "husky"
+        "test:run": "npm run db:generate:test && vitest --run"
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx}": [
@@ -64,7 +63,6 @@
         "drizzle-seed": "^0.3.1",
         "eslint": "^9.37.0",
         "eslint-plugin-perfectionist": "^4.15.1",
-        "husky": "^9.1.7",
         "lint-staged": "^16.2.3",
         "prettier": "^3.6.2",
         "supertest": "^7.1.4",
@@ -72,8 +70,5 @@
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.46.0",
         "vitest": "^3.2.4"
-    },
-    "imports": {
-        "#*": "./src/*"
     }
 }

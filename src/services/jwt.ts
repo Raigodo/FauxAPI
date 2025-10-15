@@ -1,6 +1,6 @@
-import { User } from "#domain/models/User.js";
 import "dotenv/config";
 import { default as jwt, JwtPayload } from "jsonwebtoken";
+import { User } from "../domain/models/User.js";
 import { RefreshTokenDao } from "./dao/refresh-token-dao.js";
 
 export function generateAccessToken(user: User) {

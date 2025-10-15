@@ -1,6 +1,6 @@
-import { authenticateMiddleware } from "#http/middleware/authenticate.js";
-import { NamespaceDao } from "#services/dao/namespace-dao.js";
 import { Request, Router } from "express";
+import { NamespaceDao } from "../../services/dao/namespace-dao.js";
+import { authenticateMiddleware } from "../middleware/authenticate.js";
 
 const namespaceRouter = Router();
 

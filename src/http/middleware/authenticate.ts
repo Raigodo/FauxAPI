@@ -1,6 +1,6 @@
-import { UserDao } from "#services/dao/user-dao.js";
-import { veriffyAccessToken } from "#services/jwt.js";
 import { NextFunction, Request, Response } from "express-serve-static-core";
+import { UserDao } from "../../services/dao/user-dao.js";
+import { veriffyAccessToken } from "../../services/jwt.js";
 
 export async function authenticateMiddleware(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.header("authorization");

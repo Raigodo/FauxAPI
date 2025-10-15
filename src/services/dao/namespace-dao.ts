@@ -1,6 +1,6 @@
-import { Namespace } from "#domain/models/Namespace.js";
-import { serviceProvider } from "#services/service-provider.js";
 import { and, eq, like, ne } from "drizzle-orm";
+import { Namespace } from "../../domain/models/Namespace.js";
+import { serviceProvider } from "../service-provider.js";
 import { ResourceDao } from "./resource-dao.js";
 
 export const NamespaceDao = {
