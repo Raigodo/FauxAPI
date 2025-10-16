@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { foreignKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const userTable = sqliteTable("users", {
     id: text("id").primaryKey(),
@@ -15,12 +15,23 @@ export const refreshTokenTable = sqliteTable("refresh_tokens", {
     token: text("value").notNull().unique(),
 });
 
-export const namespaceTable = sqliteTable("namespaces", {
-    id: text("id").primaryKey(),
-    userId: text("user_id")
-        .notNull()
-        .references(() => userTable.id, { onDelete: "restrict" }),
-});
+export const namespaceTable = sqliteTable(
+    "namespaces",
+    {
+        id: text("id").primaryKey(),
+        userId: text("user_id")
+            .notNull()
+            .references(() => userTable.id, { onDelete: "restrict" }),
+        parentNamespaceId: text("parent_namespace_id"),
+    },
+    (table) => ({
+        parentNamespace: foreignKey({
+            columns: [table.parentNamespaceId],
+            foreignColumns: [table.id],
+            name: "parent_namespace_id_fkey",
+        }),
+    })
+);
 
 export const resourceTable = sqliteTable("resources", {
     id: text("id").notNull(),
@@ -45,6 +56,10 @@ export const refreshTokenRelations = relations(refreshTokenTable, ({ one }) => (
 
 export const namespacesRelations = relations(namespaceTable, ({ one, many }) => ({
     user: one(userTable, { fields: [namespaceTable.userId], references: [userTable.id] }),
+    parrentNamespace: one(namespaceTable, {
+        fields: [namespaceTable.parentNamespaceId],
+        references: [namespaceTable.id],
+    }),
     resources: many(resourceTable),
 }));
 

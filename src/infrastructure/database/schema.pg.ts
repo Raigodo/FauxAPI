@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { pgTable, varchar } from "drizzle-orm/pg-core";
+import { foreignKey, pgTable, varchar } from "drizzle-orm/pg-core";
 
 export const userTable = pgTable("users", {
     id: varchar("id").primaryKey(),
@@ -15,12 +15,23 @@ export const refreshTokenTable = pgTable("refresh_tokens", {
     token: varchar("value").notNull().unique(),
 });
 
-export const namespaceTable = pgTable("namespaces", {
-    id: varchar("id").primaryKey(),
-    userId: varchar("user_id")
-        .notNull()
-        .references(() => userTable.id, { onDelete: "restrict" }),
-});
+export const namespaceTable = pgTable(
+    "namespaces",
+    {
+        id: varchar("id").primaryKey(),
+        userId: varchar("user_id")
+            .notNull()
+            .references(() => userTable.id, { onDelete: "restrict" }),
+        parentNamespaceId: varchar("parent_namespace_id"),
+    },
+    (table) => ({
+        parentNamespace: foreignKey({
+            columns: [table.parentNamespaceId],
+            foreignColumns: [table.id],
+            name: "parent_namespace_id_fkey",
+        }),
+    })
+);
 
 export const resourceTable = pgTable("resources", {
     id: varchar("id").notNull(),
@@ -46,6 +57,10 @@ export const refreshTokenRelations = relations(refreshTokenTable, ({ one }) => (
 
 export const namespacesRelations = relations(namespaceTable, ({ one, many }) => ({
     user: one(userTable, { fields: [namespaceTable.userId], references: [userTable.id] }),
+    parrentNamespace: one(namespaceTable, {
+        fields: [namespaceTable.parentNamespaceId],
+        references: [namespaceTable.id],
+    }),
     resources: many(resourceTable),
 }));
 

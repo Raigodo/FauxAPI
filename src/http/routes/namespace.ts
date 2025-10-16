@@ -16,7 +16,7 @@ namespaceRouter.get(
         }
         const namespaceId = "/" + wildcard.join("/");
 
-        const namespace = await NamespaceDao.findById(namespaceId);
+        const namespace = await NamespaceDao.findDetailById(namespaceId);
 
         res.json(namespace);
     }
