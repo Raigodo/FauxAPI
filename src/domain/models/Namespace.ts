@@ -1,4 +1,5 @@
 export type Namespace = {
-    id: string;
+    key: string;
     userId: string;
+    parentNamespaceKey: string | null;
 };

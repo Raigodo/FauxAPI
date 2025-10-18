@@ -1,8 +1,7 @@
 import "dotenv/config";
 import { Request, Response, Router } from "express";
-import { NamespaceDao } from "../../services/dao/namespace-dao.js";
 import { ResourceDao } from "../../services/dao/resource-dao.js";
-import { UserDao } from "../../services/dao/user-dao.js";
+import { joinToNamespaceKey } from "../../utils/namespace-key-utils.js";
 import { authenticateMiddleware } from "../middleware/authenticate.js";
 import { multerMiddleware } from "../middleware/multer.js";
 
@@ -18,10 +17,14 @@ resourceRouter.get(
             res.sendStatus(400);
             return;
         }
-        const namespaceId = "/" + wildcard.slice(0, -1).join("/");
+        const namespaceKey = joinToNamespaceKey(wildcard.slice(0, -1));
         const key = wildcard.at(-1)!;
 
-        const resource = await ResourceDao.findDetailById({ id: key, namespaceId });
+        const resource = await ResourceDao.findDetailById({
+            key,
+            namespaceKey,
+            userId: req.session.userId,
+        });
 
         if (!resource) {
             res.sendStatus(404);
@@ -42,10 +45,8 @@ resourceRouter.put(
             res.sendStatus(400);
             return;
         }
-        const namespaceId = "/" + wildcard.slice(0, -1).join("/");
+        const namespaceKey = joinToNamespaceKey(wildcard.slice(0, -1));
         const key = wildcard.at(-1)!;
-
-        const user = await UserDao.findById(req.session.userId);
 
         let body: Buffer | string;
         let contentType: string;
@@ -60,15 +61,10 @@ resourceRouter.put(
             return res.status(400).json({ error: "No file or JSON data provided" });
         }
 
-        let ns = await NamespaceDao.findById(namespaceId);
-        if (!ns) {
-            await NamespaceDao.create({ id: namespaceId, userId: user.id });
-        }
-
         await ResourceDao.create({
-            id: key,
-            namespaceId,
-            userId: user.id,
+            key,
+            namespaceKey,
+            userId: req.session.userId,
             contentType,
             payload: body,
         });
@@ -87,10 +83,10 @@ resourceRouter.delete(
             res.sendStatus(400);
             return;
         }
-        const namespaceId = "/" + wildcard.slice(0, -1).join("/");
+        const namespaceKey = joinToNamespaceKey(wildcard.slice(0, -1));
         const key = wildcard.at(-1)!;
 
-        const result = await ResourceDao.delete({ id: key, namespaceId });
+        const result = await ResourceDao.delete({ key, namespaceKey, userId: req.session.userId });
 
         res.sendStatus(204);
     }

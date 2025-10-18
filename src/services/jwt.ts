@@ -9,47 +9,48 @@ export function generateAccessToken(user: User) {
     });
 }
 
+type ValidationResult =
+    | { valid: false; payload: undefined }
+    | { valid: true; payload: { userId: string } };
+
 export async function generateRefreshToken(user: User) {
     const refreshToken = jwt.sign({ userId: user.id }, process.env.REFRESH_TOKEN_SECRET!);
     await RefreshTokenDao.upsert({ userId: user.id, token: refreshToken });
     return refreshToken;
 }
 
-export function veriffyAccessToken(
-    token: string
-): { valid: false } | { valid: true; payload: { userId: string } } {
+export function veriffyAccessToken(token: string): ValidationResult {
     let refreshPayload: { userId: string } | undefined;
-
-    let valid: boolean = true;
+    let ok = true;
 
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!, (err, user) => {
         if (err) {
-            valid = false;
+            ok = false;
             return;
         }
         refreshPayload = { userId: (user as JwtPayload).userId as string };
     });
 
-    return {
-        valid,
-        payload: refreshPayload!,
-    };
+    if (ok) {
+        return { valid: true, payload: refreshPayload! };
+    }
+    return { valid: false, payload: undefined };
 }
 
-export function veriffyRefreshToken(
-    token: string
-): { valid: false } | { valid: true; payload: { userId: string } } {
+export async function veriffyRefreshToken(token: string): Promise<ValidationResult> {
     let refreshPayload: { userId: string } | undefined;
+    let ok = true;
 
     jwt.verify(token, process.env.REFRESH_TOKEN_SECRET!, (err, user) => {
         if (err) {
-            return { valid: false };
+            ok = false;
+            return;
         }
         refreshPayload = { userId: (user as JwtPayload).userId as string };
     });
 
-    return {
-        valid: true,
-        payload: refreshPayload!,
-    };
+    if (ok) {
+        return { valid: true, payload: refreshPayload! };
+    }
+    return { valid: false, payload: undefined };
 }

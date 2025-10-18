@@ -1,6 +1,6 @@
 export type Resource = {
-    id: string;
-    namespaceId: string;
+    key: string;
+    namespaceKey: string;
     userId: string;
     contentType: string;
 };

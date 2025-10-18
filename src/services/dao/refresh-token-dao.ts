@@ -4,39 +4,29 @@ import { serviceProvider } from "../service-provider.js";
 
 export const RefreshTokenDao = {
     findByUserId: (userId: RefreshToken["userId"]) => {
-        const { db, refreshTokenTable } = serviceProvider.getDatabase();
-        return db
-            .select()
-            .from(refreshTokenTable)
-            .where(eq(refreshTokenTable.userId, userId))
-            .then((rows) => rows[0] ?? null);
+        const { db, refreshTokens } = serviceProvider.getDatabase();
+        return db.query.refreshTokens.findFirst({ where: eq(refreshTokens.userId, userId) });
     },
     findByValue: (token: RefreshToken["token"]) => {
-        const { db, refreshTokenTable } = serviceProvider.getDatabase();
-        return db
-            .select()
-            .from(refreshTokenTable)
-            .where(eq(refreshTokenTable.token, token))
-            .then((rows) => rows[0] ?? null);
+        const { db, refreshTokens } = serviceProvider.getDatabase();
+        return db.query.refreshTokens.findFirst({ where: eq(refreshTokens.token, token) });
     },
     upsert: async (data: RefreshToken) => {
-        const { db, refreshTokenTable } = serviceProvider.getDatabase();
-        const existing = await db
-            .select()
-            .from(refreshTokenTable)
-            .where(eq(refreshTokenTable.userId, data.userId));
-
-        if (existing.length > 0) {
+        const { db, refreshTokens } = serviceProvider.getDatabase();
+        const existing = await db.query.refreshTokens.findFirst({
+            where: eq(refreshTokens.userId, data.userId),
+        });
+        if (existing) {
             await db
-                .update(refreshTokenTable)
+                .update(refreshTokens)
                 .set({ token: data.token })
-                .where(eq(refreshTokenTable.userId, data.userId));
+                .where(eq(refreshTokens.userId, data.userId));
         } else {
-            await db.insert(refreshTokenTable).values(data);
+            await db.insert(refreshTokens).values(data);
         }
     },
     delete: (userId: RefreshToken["userId"]) => {
-        const { db, userTable } = serviceProvider.getDatabase();
-        return db.delete(userTable).where(eq(userTable.id, userId));
+        const { db, refreshTokens } = serviceProvider.getDatabase();
+        return db.delete(refreshTokens).where(eq(refreshTokens.userId, userId));
     },
 };

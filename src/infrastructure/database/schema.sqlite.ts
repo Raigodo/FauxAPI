@@ -1,72 +1,91 @@
 import { relations } from "drizzle-orm";
-import { foreignKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { foreignKey, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core"; // use sqlite-core
+// Note: In Drizzle, pgTable can be replaced by sqliteTable or pgTable can still work, but for clarity we use sqlite-core here.
 
-export const userTable = sqliteTable("users", {
+export const users = sqliteTable("users", {
     id: text("id").primaryKey(),
     nickname: text("nickname").notNull(),
     username: text("username").notNull(),
     password: text("password").notNull(),
 });
 
-export const refreshTokenTable = sqliteTable("refresh_tokens", {
+export const usersRelations = relations(users, ({ many }) => ({
+    namespaces: many(namespaces, { relationName: "owner" }),
+    resources: many(resources, { relationName: "creator" }),
+}));
+
+export const refreshTokens = sqliteTable("refresh_tokens", {
     userId: text("user_id")
         .primaryKey()
-        .references(() => userTable.id, { onDelete: "cascade" }),
+        .references(() => users.id, { onDelete: "cascade" }),
     token: text("value").notNull().unique(),
 });
 
-export const namespaceTable = sqliteTable(
+export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
+    user: one(users, { fields: [refreshTokens.userId], references: [users.id] }),
+}));
+
+export const namespaces = sqliteTable(
     "namespaces",
     {
-        id: text("id").primaryKey(),
+        key: text("key").notNull(),
         userId: text("user_id")
             .notNull()
-            .references(() => userTable.id, { onDelete: "restrict" }),
-        parentNamespaceId: text("parent_namespace_id"),
+            .references(() => users.id, { onDelete: "restrict" }),
+        parentNamespaceKey: text("parent_namespace_key"),
     },
-    (table) => ({
-        parentNamespace: foreignKey({
-            columns: [table.parentNamespaceId],
-            foreignColumns: [table.id],
-            name: "parent_namespace_id_fkey",
-        }),
-    })
+    (table) => [
+        primaryKey({ columns: [table.userId, table.key] }),
+        foreignKey({
+            columns: [table.userId, table.parentNamespaceKey],
+            foreignColumns: [table.userId, table.key],
+        }).onDelete("cascade"),
+    ]
 );
 
-export const resourceTable = sqliteTable("resources", {
-    id: text("id").notNull(),
-    contentType: text("content_type").notNull(),
-    namespaceId: text("namespace_id")
-        .notNull()
-        .references(() => namespaceTable.id, { onDelete: "restrict" }),
-    userId: text("user_id")
-        .notNull()
-        .references(() => userTable.id, { onDelete: "restrict" }),
-});
-
-// Relations (same as Postgres)
-export const usersRelations = relations(userTable, ({ many }) => ({
-    namespaces: many(namespaceTable),
-    resources: many(resourceTable),
-}));
-
-export const refreshTokenRelations = relations(refreshTokenTable, ({ one }) => ({
-    user: one(userTable, { fields: [refreshTokenTable.userId], references: [userTable.id] }),
-}));
-
-export const namespacesRelations = relations(namespaceTable, ({ one, many }) => ({
-    user: one(userTable, { fields: [namespaceTable.userId], references: [userTable.id] }),
-    parrentNamespace: one(namespaceTable, {
-        fields: [namespaceTable.parentNamespaceId],
-        references: [namespaceTable.id],
+export const namespacesRelations = relations(namespaces, ({ one, many }) => ({
+    owner: one(users, {
+        fields: [namespaces.userId],
+        references: [users.id],
+        relationName: "owner",
     }),
-    resources: many(resourceTable),
+    namespaces: many(namespaces, { relationName: "namespace" }),
+    namespace: one(namespaces, {
+        fields: [namespaces.parentNamespaceKey, namespaces.userId],
+        references: [namespaces.key, namespaces.userId],
+        relationName: "namespace",
+    }),
+    resources: many(resources, { relationName: "resource_namespace" }),
 }));
 
-export const resourcesRelations = relations(resourceTable, ({ one }) => ({
-    namespace: one(namespaceTable, {
-        fields: [resourceTable.namespaceId],
-        references: [namespaceTable.id],
+export const resources = sqliteTable(
+    "resources",
+    {
+        key: text("key").notNull(),
+        contentType: text("content_type").notNull(),
+        namespaceKey: text("namespace_key").notNull(),
+        userId: text("user_id")
+            .notNull()
+            .references(() => users.id, { onDelete: "restrict" }),
+    },
+    (table) => [
+        primaryKey({ columns: [table.key, table.namespaceKey, table.userId] }),
+        foreignKey({
+            columns: [table.userId, table.namespaceKey],
+            foreignColumns: [namespaces.userId, namespaces.key],
+        }).onDelete("restrict"),
+    ]
+);
+
+export const resourcesRelations = relations(resources, ({ one }) => ({
+    namespace: one(namespaces, {
+        fields: [resources.namespaceKey, resources.userId],
+        references: [namespaces.key, namespaces.userId],
+        relationName: "resource_namespace",
     }),
-    user: one(userTable, { fields: [resourceTable.userId], references: [userTable.id] }),
+    creator: one(users, {
+        fields: [resources.userId],
+        references: [users.id],
+        relationName: "creator",
+    }),
 }));

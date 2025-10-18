@@ -1,61 +1,71 @@
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import "dotenv/config";
-import { and, eq } from "drizzle-orm";
+import { and, eq, like } from "drizzle-orm";
+import { Namespace } from "../../domain/models/Namespace.js";
 import { Resource } from "../../domain/models/Resource.js";
+import { joinToNamespaceKey } from "../../utils/namespace-key-utils.js";
 import { serviceProvider } from "../service-provider.js";
+import { NamespaceDao } from "./namespace-dao.js";
 
 export const ResourceDao = {
-    findByNamespaceId: (namespaceId: Resource["namespaceId"]) => {
-        const { db, resourceTable } = serviceProvider.getDatabase();
-        return db.select().from(resourceTable).where(eq(resourceTable.namespaceId, namespaceId));
+    findAllAndNestedByNamespaceKey: async (compositeKey: Pick<Namespace, "key" | "userId">) => {
+        const { db, resources } = serviceProvider.getDatabase();
+        return db.query.resources.findMany({
+            where: and(
+                eq(resources.userId, compositeKey.userId),
+                like(resources.namespaceKey, `${compositeKey.key}%`)
+            ),
+        });
     },
-    findById: (params: { id: Resource["id"]; namespaceId: Resource["namespaceId"] }) => {
-        const { db, resourceTable } = serviceProvider.getDatabase();
-        return db
-            .select()
-            .from(resourceTable)
-            .where(
-                and(
-                    eq(resourceTable.id, params.id),
-                    eq(resourceTable.namespaceId, params.namespaceId)
-                )
-            )
-            .then((rows) => rows[0] ?? null);
+    findById: (compositeKey: Pick<Resource, "key" | "namespaceKey" | "userId">) => {
+        const { db, resources } = serviceProvider.getDatabase();
+
+        return db.query.resources.findFirst({
+            where: and(
+                eq(resources.key, compositeKey.key),
+                eq(resources.namespaceKey, compositeKey.namespaceKey),
+                eq(resources.userId, compositeKey.userId)
+            ),
+        });
     },
-    findDetailById: async (params: {
-        id: Resource["id"];
-        namespaceId: Resource["namespaceId"];
-    }) => {
-        const { db, resourceTable } = serviceProvider.getDatabase();
+    findDetailById: async (compositeKey: Pick<Resource, "key" | "namespaceKey" | "userId">) => {
+        const { db, resources } = serviceProvider.getDatabase();
 
-        const model = await db
-            .select()
-            .from(resourceTable)
-            .where(
-                and(
-                    eq(resourceTable.id, params.id),
-                    eq(resourceTable.namespaceId, params.namespaceId)
-                )
-            )
-            .then((rows) => rows[0] ?? null);
-
-        let url: string | undefined;
-        let payload: unknown | undefined;
-
+        const model = await db.query.resources.findFirst({
+            where: and(
+                eq(resources.key, compositeKey.key),
+                eq(resources.namespaceKey, compositeKey.namespaceKey),
+                eq(resources.userId, compositeKey.userId)
+            ),
+        });
         if (!model) {
             return null;
         }
 
+        let url: string | undefined;
+        let payload: unknown | undefined;
+
         const s3 = serviceProvider.getBucket();
         if (model.contentType !== "application/json") {
-            url = await s3.getSignedUrl(`${params.namespaceId}/${params.id}`);
+            url = await s3.getSignedUrl(
+                joinToNamespaceKey([
+                    compositeKey.userId,
+                    compositeKey.namespaceKey,
+                    compositeKey.key,
+                ])
+            );
         } else {
             const obj = await s3.send(
                 new GetObjectCommand({
                     Bucket: process.env.BUCKET_RESOURCES,
-                    Key: `${model.namespaceId}/${model.id}`,
+                    Key: joinToNamespaceKey([
+                        compositeKey.userId,
+                        compositeKey.namespaceKey,
+                        compositeKey.key,
+                    ]),
                 })
             );
+
             let data: string;
             if (obj.Body && typeof obj.Body.transformToString === "function") {
                 data = await obj.Body.transformToString();
@@ -73,42 +83,71 @@ export const ResourceDao = {
         return { ...model, url, payload };
     },
     create: async (data: Resource & { payload: Buffer | string }) => {
-        const { db, resourceTable } = serviceProvider.getDatabase();
+        const { db, resources } = serviceProvider.getDatabase();
         const s3 = serviceProvider.getBucket();
+
+        const namespaceKey = await NamespaceDao.create({
+            key: data.namespaceKey,
+            userId: data.userId,
+        });
+
+        if (!namespaceKey) throw Error("failed to create namespaces for resource");
+
         await s3.send(
             new PutObjectCommand({
                 Bucket: process.env.BUCKET_RESOURCES,
-                Key: `${data.namespaceId}/${data.id}`,
+                Key: joinToNamespaceKey([data.userId, namespaceKey, data.key]),
                 Body: data.payload,
                 ContentType: data.contentType,
             })
         );
-        return await db.insert(resourceTable).values(data);
+
+        const dataToInsert = { ...data, namespaceKey: namespaceKey! };
+
+        return await db
+            .insert(resources)
+            .values(dataToInsert)
+            .onConflictDoUpdate({
+                target: [resources.key, resources.namespaceKey, resources.userId],
+                set: dataToInsert,
+            });
     },
-    update: (data: Pick<Resource, "id" | "userId" | "namespaceId">) => {
-        const { db, resourceTable } = serviceProvider.getDatabase();
+    update: (
+        compositeKey: Pick<Resource, "key" | "namespaceKey" | "userId">,
+        data: Pick<Resource, "userId">
+    ) => {
+        const { db, resources } = serviceProvider.getDatabase();
         return db
-            .update(resourceTable)
+            .update(resources)
             .set({ userId: data.userId })
             .where(
-                and(eq(resourceTable.id, data.id), eq(resourceTable.namespaceId, data.namespaceId))
+                and(
+                    eq(resources.key, compositeKey.key),
+                    eq(resources.namespaceKey, compositeKey.namespaceKey),
+                    eq(resources.userId, compositeKey.userId)
+                )
             );
     },
-    delete: async (params: { id: Resource["id"]; namespaceId: Resource["namespaceId"] }) => {
-        const { db, resourceTable } = serviceProvider.getDatabase();
+    delete: async (compositeKey: Pick<Resource, "key" | "namespaceKey" | "userId">) => {
+        const { db, resources } = serviceProvider.getDatabase();
         const s3 = serviceProvider.getBucket();
         await s3.send(
             new DeleteObjectCommand({
                 Bucket: process.env.BUCKET_RESOURCES,
-                Key: `${params.namespaceId}/${params.id}`,
+                Key: joinToNamespaceKey([
+                    compositeKey.userId,
+                    compositeKey.namespaceKey,
+                    compositeKey.key,
+                ]),
             })
         );
         return await db
-            .delete(resourceTable)
+            .delete(resources)
             .where(
                 and(
-                    eq(resourceTable.id, params.id),
-                    eq(resourceTable.namespaceId, params.namespaceId)
+                    eq(resources.key, compositeKey.key),
+                    eq(resources.namespaceKey, compositeKey.namespaceKey),
+                    eq(resources.userId, compositeKey.userId)
                 )
             );
     },

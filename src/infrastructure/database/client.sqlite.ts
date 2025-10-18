@@ -9,9 +9,9 @@ export function createSqliteClient() {
     return {
         client,
         db,
-        userTable: schemas.userTable,
-        namespaceTable: schemas.namespaceTable,
-        refreshTokenTable: schemas.refreshTokenTable,
-        resourceTable: schemas.resourceTable,
+        users: schemas.users,
+        namespaces: schemas.namespaces,
+        refreshTokens: schemas.refreshTokens,
+        resources: schemas.resources,
     };
 }

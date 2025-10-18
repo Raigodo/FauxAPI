@@ -88,17 +88,17 @@ authRouter.post(
             return;
         }
 
-        const veriffyResult = veriffyRefreshToken(refreshToken);
+        const veriffyResult = await veriffyRefreshToken(refreshToken);
 
         if (!veriffyResult.valid) {
-            res.sendStatus(403);
+            res.sendStatus(401);
             return;
         }
 
         const user = await UserDao.findById(veriffyResult.payload.userId);
 
-        const newAccessToken = generateAccessToken(user);
-        const newRefreshToken = await generateRefreshToken(user);
+        const newAccessToken = generateAccessToken(user!);
+        const newRefreshToken = await generateRefreshToken(user!);
 
         res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
     }
