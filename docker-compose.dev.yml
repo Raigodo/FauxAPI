@@ -42,40 +42,6 @@ services:
             exit 0;
             "
 
-    app:
-        build:
-            context: .
-            dockerfile: Dockerfile
-        container_name: express_app
-        restart: unless-stopped
-        env_file: .env
-        environment:
-            #kubernetes.docker.internal = localhost for docker on windows
-            #see C:\Windows\System32\drivers\etc\hosts
-            #
-            # # Added by Docker Desktop
-            # 192.168.91.145 host.docker.internal
-            # 192.168.91.145 gateway.docker.internal
-            # # To allow the same kube context to work on the host and the container:
-            # 127.0.0.1 kubernetes.docker.internal
-            #
-            DATABASE_URL: postgresql://myuser:mypassword@kubernetes.docker.internal:5432/faux_api
-            BUCKET_ENDPOINT: http://kubernetes.docker.internal:9000
-        depends_on:
-            - database
-            - createbuckets
-        ports:
-            - "3000:3000"
-
-    migrate:
-        build:
-            context: .
-            dockerfile: Dockerfile.migrate
-        depends_on:
-            - database
-        environment:
-            DATABASE_URL: postgresql://myuser:mypassword@kubernetes.docker.internal:5432/faux_api
-
 volumes:
     postgres_data:
         driver: local
