@@ -54,7 +54,7 @@ namespaceRouter.delete(
         }
         const namespaceKey = joinToNamespaceKey(wildcard);
 
-        const result = await NamespaceDao.delete({
+        await NamespaceDao.delete({
             key: namespaceKey,
             userId: req.session.userId,
         });

@@ -12,7 +12,7 @@ express.urlencoded();
 app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/resources", resourceRouter);
-app.use("/api/namespace", namespaceRouter);
+app.use("/api/namespaces", namespaceRouter);
 
 app.get("/", (req, res) => {
     res.send("FauxAPI is running");

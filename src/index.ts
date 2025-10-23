@@ -4,5 +4,5 @@ import app from "./app.js";
 const port = process.env.PORT ?? "9001";
 
 app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`);
+    console.log(`FauxAPI listening on port ${port}`);
 });

@@ -1,6 +1,6 @@
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import "dotenv/config";
-import { and, eq, like } from "drizzle-orm";
+import { and, eq, like, or } from "drizzle-orm";
 import { Namespace } from "../../domain/models/Namespace.js";
 import { Resource } from "../../domain/models/Resource.js";
 import { joinToNamespaceKey } from "../../utils/namespace-key-utils.js";
@@ -8,10 +8,10 @@ import { serviceProvider } from "../service-provider.js";
 import { NamespaceDao } from "./namespace-dao.js";
 
 export const ResourceDao = {
-    findAllAndNestedByNamespaceKey: async (compositeKey: Pick<Namespace, "key" | "userId">) => {
+    findAllNested: async (compositeKey: Pick<Namespace, "key" | "userId">) => {
         const { db, resources } = serviceProvider.getDatabase();
         return db.query.resources.findMany({
-            where: and(
+            where: or(
                 eq(resources.userId, compositeKey.userId),
                 like(resources.namespaceKey, `${compositeKey.key}%`)
             ),

@@ -1,10 +1,21 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, like } from "drizzle-orm";
 import { Namespace } from "../../domain/models/Namespace.js";
 import { joinToNamespaceKey } from "../../utils/namespace-key-utils.js";
 import { serviceProvider } from "../service-provider.js";
 import { ResourceDao } from "./resource-dao.js";
 
 export const NamespaceDao = {
+    isEmpty: async (compositeKey: Pick<Namespace, "key" | "userId">) => {
+        const { db, resources } = serviceProvider.getDatabase();
+        const anyResource = await db.query.resources.findFirst({
+            where: and(
+                eq(resources.userId, compositeKey.userId),
+                like(resources.namespaceKey, `${compositeKey.key}%`)
+            ),
+            columns: { key: true },
+        });
+        return !!anyResource;
+    },
     findById: (compositeKey: Pick<Namespace, "key" | "userId">) => {
         const { db, namespaces } = serviceProvider.getDatabase();
 
@@ -60,10 +71,36 @@ export const NamespaceDao = {
             .where(and(eq(namespaces.key, data.key), eq(namespaces.userId, data.userId)));
     },
 
+    deleteEmptyNamespaces: async (compositeKey: Pick<Namespace, "key" | "userId">) => {
+        const { db, namespaces } = serviceProvider.getDatabase();
+
+        const parts = compositeKey.key.split("/").filter(Boolean);
+        const parentNamespaceKeys = parts.map((_, i) => "/" + parts.slice(0, i + 1).join("/"));
+
+        for (const namespaceKey of parentNamespaceKeys) {
+            const hasResources = await NamespaceDao.isEmpty({
+                key: namespaceKey,
+                userId: compositeKey.userId,
+            });
+
+            if (!hasResources) {
+                await db
+                    .delete(namespaces)
+                    .where(
+                        and(
+                            eq(namespaces.key, namespaceKey),
+                            eq(namespaces.userId, compositeKey.userId)
+                        )
+                    );
+                break;
+            }
+        }
+    },
+
     delete: async (compositeKey: Pick<Namespace, "key" | "userId">) => {
         const { db, namespaces } = serviceProvider.getDatabase();
 
-        const resources = await ResourceDao.findAllAndNestedByNamespaceKey(compositeKey);
+        const resources = await ResourceDao.findAllNested(compositeKey);
         await Promise.all(
             resources.map((resource) =>
                 ResourceDao.delete({

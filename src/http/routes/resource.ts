@@ -1,15 +1,17 @@
 import "dotenv/config";
 import { Request, Response, Router } from "express";
+import { NamespaceDao } from "../../services/dao/namespace-dao.js";
 import { ResourceDao } from "../../services/dao/resource-dao.js";
 import { joinToNamespaceKey } from "../../utils/namespace-key-utils.js";
 import { authenticateMiddleware } from "../middleware/authenticate.js";
+import { exceptionMiddleware } from "../middleware/exception-middleware.js";
 import { multerMiddleware } from "../middleware/multer.js";
 
 const resourceRouter = Router();
 
 resourceRouter.get(
     "/*wildcard",
-    authenticateMiddleware,
+    [exceptionMiddleware, authenticateMiddleware],
     // @ts-expect-error
     async (req: Request<{ wildcard: string[] }>, res) => {
         const wildcard = req.params.wildcard;
@@ -37,7 +39,7 @@ resourceRouter.get(
 
 resourceRouter.put(
     "/*wildcard",
-    [authenticateMiddleware, multerMiddleware.single("file")],
+    [exceptionMiddleware, authenticateMiddleware, multerMiddleware.single("file")],
     // @ts-expect-error
     async (req: Request<{ wildcard: string[] }>, res: Response) => {
         const wildcard = req.params.wildcard;
@@ -75,7 +77,7 @@ resourceRouter.put(
 
 resourceRouter.delete(
     "/*wildcard",
-    authenticateMiddleware,
+    [exceptionMiddleware, authenticateMiddleware],
     // @ts-expect-error
     async (req: Request<{ wildcard: string[] }>, res) => {
         const wildcard = req.params.wildcard;
@@ -87,6 +89,7 @@ resourceRouter.delete(
         const key = wildcard.at(-1)!;
 
         const result = await ResourceDao.delete({ key, namespaceKey, userId: req.session.userId });
+        await NamespaceDao.deleteEmptyNamespaces({ key: namespaceKey, userId: req.session.userId });
 
         res.sendStatus(204);
     }
