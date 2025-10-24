@@ -108,6 +108,7 @@ describe("Namespace behavior", () => {
             const res = await supertest(app)
                 .get(`/api/namespaces${path}`)
                 .set("Authorization", `Bearer ${accessToken}`);
+
             expect(res.status).toBe(404);
         }
     });

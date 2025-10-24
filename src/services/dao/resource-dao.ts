@@ -3,7 +3,7 @@ import "dotenv/config";
 import { and, eq, like, or } from "drizzle-orm";
 import { Namespace } from "../../domain/models/Namespace.js";
 import { Resource } from "../../domain/models/Resource.js";
-import { joinToNamespaceKey } from "../../utils/namespace-key-utils.js";
+import { createBucketResourceKey, joinToNamespaceKey } from "../../utils/bucket-namespace-utils.js";
 import { serviceProvider } from "../service-provider.js";
 import { NamespaceDao } from "./namespace-dao.js";
 
@@ -51,7 +51,7 @@ export const ResourceDao = {
                 joinToNamespaceKey([
                     compositeKey.userId,
                     compositeKey.namespaceKey,
-                    compositeKey.key,
+                    createBucketResourceKey(compositeKey.key),
                 ])
             );
         } else {
@@ -61,7 +61,7 @@ export const ResourceDao = {
                     Key: joinToNamespaceKey([
                         compositeKey.userId,
                         compositeKey.namespaceKey,
-                        compositeKey.key,
+                        createBucketResourceKey(compositeKey.key),
                     ]),
                 })
             );
@@ -96,7 +96,11 @@ export const ResourceDao = {
         await s3.send(
             new PutObjectCommand({
                 Bucket: process.env.BUCKET_RESOURCES,
-                Key: joinToNamespaceKey([data.userId, namespaceKey, data.key]),
+                Key: joinToNamespaceKey([
+                    data.userId,
+                    namespaceKey,
+                    createBucketResourceKey(data.key),
+                ]),
                 Body: data.payload,
                 ContentType: data.contentType,
             })
@@ -137,7 +141,7 @@ export const ResourceDao = {
                 Key: joinToNamespaceKey([
                     compositeKey.userId,
                     compositeKey.namespaceKey,
-                    compositeKey.key,
+                    createBucketResourceKey(compositeKey.key),
                 ]),
             })
         );

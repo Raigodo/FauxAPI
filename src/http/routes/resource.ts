@@ -2,7 +2,7 @@ import "dotenv/config";
 import { Request, Response, Router } from "express";
 import { NamespaceDao } from "../../services/dao/namespace-dao.js";
 import { ResourceDao } from "../../services/dao/resource-dao.js";
-import { joinToNamespaceKey } from "../../utils/namespace-key-utils.js";
+import { joinToNamespaceKey } from "../../utils/bucket-namespace-utils.js";
 import { authenticateMiddleware } from "../middleware/authenticate.js";
 import { exceptionMiddleware } from "../middleware/exception-middleware.js";
 import { multerMiddleware } from "../middleware/multer.js";

@@ -1,6 +1,6 @@
 import { and, eq, like } from "drizzle-orm";
 import { Namespace } from "../../domain/models/Namespace.js";
-import { joinToNamespaceKey } from "../../utils/namespace-key-utils.js";
+import { joinToNamespaceKey } from "../../utils/bucket-namespace-utils.js";
 import { serviceProvider } from "../service-provider.js";
 import { ResourceDao } from "./resource-dao.js";
 

@@ -8,3 +8,7 @@ export function joinToNamespaceKey(parts: (string | null | undefined)[]): string
             .join("/")
     );
 }
+
+export function createBucketResourceKey(key: string) {
+    return `file_${key}`;
+}

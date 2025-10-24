@@ -1,6 +1,6 @@
 import { Request, Router } from "express";
 import { NamespaceDao } from "../../services/dao/namespace-dao.js";
-import { joinToNamespaceKey } from "../../utils/namespace-key-utils.js";
+import { joinToNamespaceKey } from "../../utils/bucket-namespace-utils.js";
 import { authenticateMiddleware } from "../middleware/authenticate.js";
 
 const namespaceRouter = Router();
@@ -16,6 +16,11 @@ namespaceRouter.get(
             key: namespaceKey,
             userId: req.session.userId,
         });
+
+        if (!namespace) {
+            res.sendStatus(404);
+            return;
+        }
 
         res.json(namespace);
     }
@@ -37,6 +42,11 @@ namespaceRouter.get(
             key: namespaceKey,
             userId: req.session.userId,
         });
+
+        if (!namespace) {
+            res.sendStatus(404);
+            return;
+        }
 
         res.json(namespace);
     }
